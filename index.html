@@ -185,6 +185,9 @@
                                 statusElement.textContent = 'Hexagon Marker Detected!';
                             }
                         }
+                        else {
+                            statusElement.textContent = 'number of rows: ' + approx.rows;
+                        }
 
                         // Clean up
                         contour.delete(); 
