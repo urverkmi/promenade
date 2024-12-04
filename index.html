@@ -57,8 +57,8 @@
     <script>
         // Global variables
         let videoElement, outputCanvas, statusElement;
-        let cap, frame, markerContour;
-
+        let cap, frame, frameMat;
+        
         // Wait for OpenCV.js to load
         function onOpenCvReady() {
             videoElement = document.getElementById('video-feed');
@@ -71,12 +71,12 @@
 
         async function initializeARTracking() {
             try {
-                // Request camera access
+                // Request camera access with specific constraints
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { 
                         facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
                     }
                 });
 
@@ -88,28 +88,38 @@
                     outputCanvas.width = videoElement.videoWidth;
                     outputCanvas.height = videoElement.videoHeight;
 
+                    // Create frame matrices with correct dimensions
+                    frame = new cv.Mat(videoElement.videoHeight, videoElement.videoWidth, cv.CV_8UC4);
+                    frameMat = new cv.Mat();
+
                     // Start OpenCV processing
                     startMarkerTracking();
                 };
             } catch (error) {
                 statusElement.textContent = `Camera Error: ${error.message}`;
+                console.error(error);
             }
         }
 
         function startMarkerTracking() {
-            // Create OpenCV matrices
-            cap = new cv.VideoCapture(videoElement);
-            frame = new cv.Mat(videoElement.videoHeight, videoElement.videoWidth, cv.CV_8UC4);
-            
-            // Processing function
             function processFrame() {
                 try {
-                    // Capture frame
-                    cap.read(frame);
+                    // Verify video is ready
+                    if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                        requestAnimationFrame(processFrame);
+                        return;
+                    }
 
+                    // Read video frame into OpenCV matrix
+                    let context = outputCanvas.getContext('2d');
+                    context.drawImage(videoElement, 0, 0, outputCanvas.width, outputCanvas.height);
+                    
+                    // Create matrix from canvas
+                    frameMat = cv.imread(outputCanvas);
+                    
                     // Convert to grayscale
                     let gray = new cv.Mat();
-                    cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+                    cv.cvtColor(frameMat, gray, cv.COLOR_RGBA2GRAY);
 
                     // Apply Gaussian blur
                     let blurred = new cv.Mat();
@@ -124,11 +134,8 @@
                     let hierarchy = new cv.Mat();
                     cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-                    // Find hexagon
-                    let context = outputCanvas.getContext('2d');
+                    // Clear previous drawing
                     context.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-
-                    // Draw original video frame
                     context.drawImage(videoElement, 0, 0, outputCanvas.width, outputCanvas.height);
 
                     // Hexagon detection
@@ -185,9 +192,6 @@
                                 statusElement.textContent = 'Hexagon Marker Detected!';
                             }
                         }
-                        else {
-                            statusElement.textContent = 'number of rows: ' + approx.rows;
-                        }
 
                         // Clean up
                         contour.delete(); 
@@ -200,12 +204,14 @@
                     edges.delete();
                     contours.delete();
                     hierarchy.delete();
+                    frameMat.delete();
 
                     // Continue processing
                     requestAnimationFrame(processFrame);
                 } catch (error) {
                     console.error('Processing error:', error);
                     statusElement.textContent = 'Error in AR tracking';
+                    requestAnimationFrame(processFrame);
                 }
             }
 
