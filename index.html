@@ -2,65 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile AR Website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hexagon AR Marker Tracking</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background-color: #f0f0f0;
         }
-        #ar-container {
-            max-width: 600px;
-            margin: 0 auto;
+        #canvas-container {
             position: relative;
-        }
-        #camera-feed {
             width: 100%;
-            max-height: 400px;
-            background-color: #000;
+            max-width: 800px;
         }
-        #overlay {
+        #video-feed, #output-canvas {
+            max-width: 100%;
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
         }
         #status {
-            margin-top: 20px;
+            margin-top: 10px;
             color: #333;
+            text-align: center;
+        }
+        #marker-guide {
+            max-width: 300px;
+            margin: 20px auto;
+            border: 2px dashed #666;
+            padding: 10px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div id="ar-container">
-        <video id="camera-feed" autoplay playsinline></video>
-        <canvas id="overlay"></canvas>
+    <div id="marker-guide">
+        <p>Print or draw a HEXAGON on a piece of paper. Make sure it's clear and has distinct edges.</p>
     </div>
-    <div id="status">Loading AR experience...</div>
+    
+    <div id="canvas-container">
+        <video id="video-feed" autoplay playsinline></video>
+        <canvas id="output-canvas"></canvas>
+    </div>
+    
+    <div id="status">Loading AR Marker Tracker...</div>
+
+    <!-- OpenCV.js library -->
+    <script src="https://docs.opencv.org/4.5.2/opencv.js"></script>
 
     <script>
-        const videoElement = document.getElementById('camera-feed');
-        const overlayCanvas = document.getElementById('overlay');
-        const statusElement = document.getElementById('status');
-        const overlayContext = overlayCanvas.getContext('2d');
+        // Global variables
+        let videoElement, outputCanvas, statusElement;
+        let cap, frame, markerContour;
 
-        async function startAR() {
-            // Check for camera and AR support
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                statusElement.textContent = 'Camera access not supported.';
-                return;
-            }
+        // Wait for OpenCV.js to load
+        function onOpenCvReady() {
+            videoElement = document.getElementById('video-feed');
+            outputCanvas = document.getElementById('output-canvas');
+            statusElement = document.getElementById('status');
 
+            // Start the AR tracking
+            initializeARTracking();
+        }
+
+        async function initializeARTracking() {
             try {
                 // Request camera access
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { 
-                        facingMode: 'environment', // Prefer back camera
+                        facingMode: 'environment',
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
                     }
@@ -68,44 +82,150 @@
 
                 videoElement.srcObject = stream;
 
-                // Adjust canvas to match video dimensions
-                videoElement.addEventListener('loadedmetadata', () => {
-                    overlayCanvas.width = videoElement.videoWidth;
-                    overlayCanvas.height = videoElement.videoHeight;
-                    statusElement.textContent = 'AR Experience Active';
-                });
+                // Wait for video metadata to load
+                videoElement.onloadedmetadata = () => {
+                    // Set canvas dimensions to match video
+                    outputCanvas.width = videoElement.videoWidth;
+                    outputCanvas.height = videoElement.videoHeight;
 
-                // Simple AR overlay example
-                function drawAROverlay() {
-                    // Clear previous frame
-                    overlayContext.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-                    // Draw a simple AR marker/object
-                    overlayContext.beginPath();
-                    overlayContext.arc(
-                        overlayCanvas.width / 2, 
-                        overlayCanvas.height / 2, 
-                        100, 0, 2 * Math.PI
-                    );
-                    overlayContext.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-                    overlayContext.lineWidth = 5;
-                    overlayContext.stroke();
-
-                    // Continue drawing frames
-                    requestAnimationFrame(drawAROverlay);
-                }
-
-                // Start AR overlay
-                drawAROverlay();
-
+                    // Start OpenCV processing
+                    startMarkerTracking();
+                };
             } catch (error) {
-                statusElement.textContent = `AR Error: ${error.message}`;
-                console.error('Camera access error:', error);
+                statusElement.textContent = `Camera Error: ${error.message}`;
             }
         }
 
-        // Start AR when page loads
-        document.addEventListener('DOMContentLoaded', startAR);
+        function startMarkerTracking() {
+            // Create OpenCV matrices
+            cap = new cv.VideoCapture(videoElement);
+            frame = new cv.Mat(videoElement.videoHeight, videoElement.videoWidth, cv.CV_8UC4);
+            
+            // Processing function
+            function processFrame() {
+                try {
+                    // Capture frame
+                    cap.read(frame);
+
+                    // Convert to grayscale
+                    let gray = new cv.Mat();
+                    cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+
+                    // Apply Gaussian blur
+                    let blurred = new cv.Mat();
+                    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+
+                    // Edge detection
+                    let edges = new cv.Mat();
+                    cv.Canny(blurred, edges, 50, 150);
+
+                    // Find contours
+                    let contours = new cv.MatVector();
+                    let hierarchy = new cv.Mat();
+                    cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+                    // Find hexagon
+                    let context = outputCanvas.getContext('2d');
+                    context.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+                    // Draw original video frame
+                    context.drawImage(videoElement, 0, 0, outputCanvas.width, outputCanvas.height);
+
+                    // Hexagon detection
+                    for (let i = 0; i < contours.size(); i++) {
+                        let contour = contours.get(i);
+                        let approx = new cv.Mat();
+                        
+                        // Approximate polygon
+                        cv.approxPolyDP(contour, approx, 
+                            0.04 * cv.arcLength(contour, true), 
+                            true
+                        );
+
+                        // Check if contour is a hexagon (6 sides)
+                        if (approx.rows === 6) {
+                            // Calculate contour area
+                            let area = cv.contourArea(contour);
+                            
+                            // Filter out tiny or extremely large contours
+                            if (area > 500 && area < outputCanvas.width * outputCanvas.height * 0.5) {
+                                // Draw hexagon contour
+                                context.beginPath();
+                                for (let j = 0; j < approx.rows; j++) {
+                                    let point = approx.data32S.subarray(
+                                        j * 2, 
+                                        j * 2 + 2
+                                    );
+                                    
+                                    if (j === 0) {
+                                        context.moveTo(point[0], point[1]);
+                                    } else {
+                                        context.lineTo(point[0], point[1]);
+                                    }
+                                }
+                                context.closePath();
+                                
+                                // Highlight detected hexagon
+                                context.strokeStyle = 'lime';
+                                context.lineWidth = 3;
+                                context.stroke();
+
+                                // Draw AR circle in center of hexagon
+                                let moments = cv.moments(contour);
+                                if (moments.m00 !== 0) {
+                                    let cx = moments.m10 / moments.m00;
+                                    let cy = moments.m01 / moments.m00;
+
+                                    context.beginPath();
+                                    context.arc(cx, cy, 50, 0, 2 * Math.PI);
+                                    context.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                                    context.fill();
+                                }
+
+                                statusElement.textContent = 'Hexagon Marker Detected!';
+                            }
+                        }
+
+                        // Clean up
+                        contour.delete(); 
+                        approx.delete();
+                    }
+
+                    // Clean up matrices
+                    gray.delete();
+                    blurred.delete();
+                    edges.delete();
+                    contours.delete();
+                    hierarchy.delete();
+
+                    // Continue processing
+                    requestAnimationFrame(processFrame);
+                } catch (error) {
+                    console.error('Processing error:', error);
+                    statusElement.textContent = 'Error in AR tracking';
+                }
+            }
+
+            // Start frame processing when video plays
+            videoElement.onplay = processFrame;
+        }
+
+        // Ensure OpenCV is loaded before starting
+        function onOpenCvError() {
+            statusElement.textContent = 'Failed to load OpenCV.js';
+        }
+
+        // Wait for page and OpenCV to load
+        function waitForOpenCV() {
+            if (typeof cv !== 'undefined') {
+                onOpenCvReady();
+            } else {
+                setTimeout(waitForOpenCV, 100);
+            }
+        }
+        
+        // Start initialization
+        document.addEventListener('DOMContentLoaded', waitForOpenCV);
     </script>
 </body>
 </html>
