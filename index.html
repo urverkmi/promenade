@@ -238,7 +238,7 @@
                             let area = cv.contourArea(contour);
                             
                             // Filter out tiny or extremely large contours
-                            if (area > 300 && area < outputCanvas.width * outputCanvas.height * 0.5) {
+                            if (area > 30 && area < outputCanvas.width * outputCanvas.height * 0.5) {
                                 // Draw hexagon contour
                                 context.beginPath();
                                 for (let j = 0; j < approx.rows; j++) {
