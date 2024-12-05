@@ -238,7 +238,7 @@
                             let area = cv.contourArea(contour);
                             
                             // Filter out tiny or extremely large contours
-                            if (area > 30 && area < outputCanvas.width * outputCanvas.height * 0.5) {
+                            if (area > 300 && area < outputCanvas.width * outputCanvas.height * 0.5) {
                                 // Draw hexagon contour
                                 context.beginPath();
                                 for (let j = 0; j < approx.rows; j++) {
@@ -255,22 +255,22 @@
                                 }
                                 context.closePath();
                                 
-                                // Highlight detected hexagon
-                                context.strokeStyle = 'lime';
-                                context.lineWidth = 3;
-                                context.stroke();
+                                // // Highlight detected hexagon
+                                // context.strokeStyle = 'lime';
+                                // context.lineWidth = 3;
+                                // context.stroke();
 
-                                // Draw AR circle in center of hexagon
-                                let moments = cv.moments(contour);
-                                if (moments.m00 !== 0) {
-                                    let cx = moments.m10 / moments.m00;
-                                    let cy = moments.m01 / moments.m00;
+                                // // Draw AR circle in center of hexagon
+                                // let moments = cv.moments(contour);
+                                // if (moments.m00 !== 0) {
+                                //     let cx = moments.m10 / moments.m00;
+                                //     let cy = moments.m01 / moments.m00;
 
-                                    context.beginPath();
-                                    context.arc(cx, cy, 50, 0, 2 * Math.PI);
-                                    context.fillStyle = 'rgba(0, 255, 0, 0.5)';
-                                    context.fill();
-                                }
+                                //     context.beginPath();
+                                //     context.arc(cx, cy, 50, 0, 2 * Math.PI);
+                                //     context.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                                //     context.fill();
+                                // }
 
                                 statusElement.textContent = 'Hexagon Marker Detected!';
                             }
