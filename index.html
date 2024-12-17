@@ -2,322 +2,297 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hexagon AR Marker Tracking</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <title>Cairn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        async function callClaudeAPI() {
+            const button = document.getElementById('apiButton');
+            const resultDiv = document.getElementById('result');
+            button.disabled = true;
+            resultDiv.textContent = 'Calling API...';
+
+            try {
+                const response = await fetch('http://localhost:5001/api/claude', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors', // Explicitly set CORS mode
+                    body: JSON.stringify({
+                        model: "claude-3-haiku-20240307",
+                        max_tokens: 300,
+                        system: "You are a world class poet and philosopher. Response with short poems only, no introduction is needed.",
+                        messages: [
+                            {
+                                role: "user",
+                                content: "Write a haiku about the connection between winter and home"
+                            }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                resultDiv.textContent = data.content[0].text;
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                console.error('Detailed error:', error);
+            } finally {
+                button.disabled = false;
+            }
+        }
+    </script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
+            height: 100vh;
+            font-family: 'Inter', sans-serif;
             background-color: #f0f0f0;
+            margin: 0;
         }
-        #canvas-container {
+        h1 {
+            margin-bottom: 100px;
+            color: #333;
+            font-weight: 400;
+            font-size: 15px;
+        }
+        /* .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0px;
+            width: 350px;
+        }
+        .emotion-button {
+            padding: 15px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            background-color: #d9d9d9;
+            color: #5C5C5C;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .emotion-button:hover {
+            background-color: #7EFCA0;
+        } */
+        .ellipse-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+        #ellipse-big {
             position: relative;
-            width: 100%;
-            max-width: 800px;
+            width: 200px;
+            height: 100px;
+            background-color: beige;
+            border-radius: 50%;
+            /* margin: 0 auto 30px; */
+            overflow: hidden;
+            transition: transform 2s ease-in-out;
         }
-        #video-feed, #output-canvas {
-            max-width: 100%;
+        #ellipse-medium {
+            position: relative;
+            width: 150px;
+            height: 80px;
+            background-color: beige;
+            border-radius: 50%;
+            /* margin: 0 auto 30px; */
+            overflow: hidden;
+            transition: transform 2s ease-in-out;
+        }
+        #ellipse-small {
+            position: relative;
+            width: 70px;
+            height: 50px;
+            background-color: beige;
+            border-radius: 50%;
+            /* margin: 0 auto 30px; */
+            overflow: hidden;
+            transition: transform 2s ease-in-out;
+        }
+        #texture-overlay {
             position: absolute;
             top: 0;
             left: 0;
-        }
-        #status, #timer-display {
-            margin-top: 10px;
-            color: #333;
-            text-align: center;
-        }
-        #controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .btn {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        .btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        #marker-guide {
-            max-width: 300px;
-            margin: 20px auto;
-            border: 2px dashed #666;
-            padding: 10px;
-            text-align: center;
+            width: 100%;
+            height: 100%;
+            background-image: url('textures/stone.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            opacity: 0.3; /* Adjust opacity as needed */
+            mix-blend-mode: normal; /* Experiment with different blend modes */
         }
     </style>
 </head>
 <body>
-    <div id="marker-guide">
-        <p>Point your device at the wall clock after attaching the gadget.</p>
-    </div>
-    
-    <!-- <div id="timer-display">Time: 00:00:00</div> -->
-    
-    <div id="controls">
-        <button id="start-btn" class="btn">Start</button>
-        <button id="reset-btn" class="btn" disabled>Reset</button>
-    </div>
-    
-    <div id="canvas-container">
-        <video id="video-feed" autoplay playsinline></video>
-        <canvas id="output-canvas"></canvas>
-    </div>
-    
-    <div id="status">Loading AR Marker Tracker...</div>
 
-    <!-- OpenCV.js library -->
-    <script src="https://docs.opencv.org/4.5.2/opencv.js"></script>
+    <!-- <h1>Claude API Proxy Client</h1>
+    <button id="apiButton" onclick="callClaudeAPI()">Call Claude API</button>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; min-height: 100px;"></div> -->
+
+    <!-- <h1>How are you feeling?</h1>
+    <div class="button-grid">
+        <button class="emotion-button" onclick="redirectToMeditation('anxious')">anxious</button>
+        <button class="emotion-button" onclick="redirectToMeditation('overwhelmed')">overwhelmed</button>
+        <button class="emotion-button" onclick="redirectToMeditation('frustrated')">frustrated</button>
+        <button class="emotion-button" onclick="redirectToMeditation('peaceful')">peaceful</button>
+        <button class="emotion-button" onclick="redirectToMeditation('bored')">bored</button>
+        <button class="emotion-button" onclick="redirectToMeditation('agitated')">agitated</button>
+    </div> -->
+
+    <a-entity id="character-container" style="margin-bottom: -300px;"></a-entity>
+
+    <!-- <div class="ellipse-container" style="margin-top:-300px;  margin-bottom: 0px;">
+        <div id="ellipse-small" style="margin-left: 50px">
+            <div id="texture-overlay"></div>
+        </div>
+        <div id="ellipse-medium">
+            <div id="texture-overlay"></div>
+        </div>
+        <div class="ellipse-big-1" id="ellipse-big">
+            <div id="texture-overlay"></div>
+        </div>
+    </div> -->
+
+    <canvas id="ellipse-canvas" style="margin-top: -550px;"></canvas>
 
     <script>
-        // Timer variables
-        let startTime;
-        let timerInterval;
-        let isTimerRunning = false;
-
-        // Timer DOM elements
-        const timerDisplay = document.getElementById('timer-display');
-        const startBtn = document.getElementById('start-btn');
-        const resetBtn = document.getElementById('reset-btn');
-
-        // Timer functions
-        function startTimer() {
-            if (isTimerRunning) return;
-
-            startTime = Date.now() - (startTime || 0);
-            timerInterval = setInterval(updateTimer, 10);
-            
-            startBtn.disabled = true;
-            resetBtn.disabled = false;
-            isTimerRunning = true;
+        function redirectToMeditation(emotion) {
+            // Encode the emotion to handle spaces and special characters
+            window.location.href = `meditation.html?emotion=${encodeURIComponent(emotion)}`;
         }
 
-        function updateTimer() {
-            const elapsedTime = Date.now() - startTime;
-            
-            // Calculate hours, minutes, seconds, and centiseconds
-            const hrs = Math.floor(elapsedTime / 3600000);
-            const mins = Math.floor((elapsedTime % 3600000) / 60000);
-            const secs = Math.floor((elapsedTime % 60000) / 1000);
-            const centisecs = Math.floor((elapsedTime % 1000) / 10);
+        // P5.js sketch for random characters
+        let characters = [];
+        let N;
+        let canvas;
 
-            // Format time with leading zeros
-            const formattedTime = 
-                (hrs < 10 ? '0' + hrs : hrs) + ':' +
-                (mins < 10 ? '0' + mins : mins) + ':' +
-                (secs < 10 ? '0' + secs : secs);
+        // Listener for resizing
+        // function resizeCanvas() {
+        //     canvas.width = window.innerWidth;
+        //     canvas.height = window.innerHeight;
+        // }
+        // resizeCanvas();
+        // window.addEventListener('resize', resizeCanvas);
 
-            timerDisplay.textContent = `Time: ${formattedTime}`;
-        }
+        function setup() {
+            canvas = createCanvas(window.innerWidth, window.innerHeight);
+            console.log("width: " + window.innerWidth);
+            console.log("height: " + window.innerHeight);
+            canvas.parent('character-container');
+            textAlign(CENTER, CENTER);
+            textSize(10);
 
-        function resetTimer() {
-            clearInterval(timerInterval);
-            startTime = null;
-            timerDisplay.textContent = 'Time: 00:00:00';
-            
-            startBtn.disabled = false;
-            resetBtn.disabled = true;
-            isTimerRunning = false;
-        }
+            // Calculate the number of characters based on the window size
+            N = window.innerWidth * window.innerHeight / 4500;
 
-        // Add event listeners to buttons
-        startBtn.addEventListener('click', startTimer);
-        resetBtn.addEventListener('click', resetTimer);
-
-        // Global variables
-        let videoElement, outputCanvas, statusElement;
-        let cap, frame, frameMat;
-        
-        // Wait for OpenCV.js to load
-        function onOpenCvReady() {
-            videoElement = document.getElementById('video-feed');
-            outputCanvas = document.getElementById('output-canvas');
-            statusElement = document.getElementById('status');
-
-            // Start the AR tracking
-            initializeARTracking();
-        }
-
-        async function initializeARTracking() {
-            try {
-                // Request camera access with specific constraints
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }
+            // Generate initial random characters
+            for (let i = 0; i < N; i++) {
+                characters.push({
+                    x: random(width),
+                    y: random(height),
+                    char: char(int(random(33, 126))),
+                    // color: color(random(255), random(255), random(255))
+                    color: color(0, 0, 0)
                 });
-
-                videoElement.srcObject = stream;
-
-                // Wait for video metadata to load
-                videoElement.onloadedmetadata = () => {
-                    // Set canvas dimensions to match video
-                    outputCanvas.width = videoElement.videoWidth;
-                    outputCanvas.height = videoElement.videoHeight;
-
-                    // Create frame matrices with correct dimensions
-                    frame = new cv.Mat(videoElement.videoHeight, videoElement.videoWidth, cv.CV_8UC4);
-                    frameMat = new cv.Mat();
-
-                    // Start OpenCV processing
-                    startMarkerTracking();
-                };
-            } catch (error) {
-                statusElement.textContent = `Camera Error: ${error.message}`;
-                console.error(error);
             }
         }
 
-        function startMarkerTracking() {
-            function processFrame() {
-                try {
-                    // Verify video is ready
-                    if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-                        requestAnimationFrame(processFrame);
-                        return;
-                    }
+        function draw() {
+            clear();
 
-                    // Read video frame into OpenCV matrix
-                    let context = outputCanvas.getContext('2d');
-                    context.drawImage(videoElement, 0, 0, outputCanvas.width, outputCanvas.height);
-                    
-                    // Create matrix from canvas
-                    frameMat = cv.imread(outputCanvas);
-                    
-                    // Convert to grayscale
-                    let gray = new cv.Mat();
-                    cv.cvtColor(frameMat, gray, cv.COLOR_RGBA2GRAY);
-
-                    // Apply Gaussian blur
-                    let blurred = new cv.Mat();
-                    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-
-                    // Edge detection
-                    let edges = new cv.Mat();
-                    cv.Canny(blurred, edges, 50, 150);
-
-                    // Find contours
-                    let contours = new cv.MatVector();
-                    let hierarchy = new cv.Mat();
-                    cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-                    // Clear previous drawing
-                    context.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-                    context.drawImage(videoElement, 0, 0, outputCanvas.width, outputCanvas.height);
-
-                    // Hexagon detection
-                    for (let i = 0; i < contours.size(); i++) {
-                        let contour = contours.get(i);
-                        let approx = new cv.Mat();
-                        
-                        // Approximate polygon
-                        cv.approxPolyDP(contour, approx, 
-                            0.04 * cv.arcLength(contour, true), 
-                            true
-                        );
-
-                        // Check if contour is a hexagon (6 sides)
-                        if (approx.rows === 5) {
-                            // Calculate contour area
-                            let area = cv.contourArea(contour);
-                            
-                            // Filter out tiny or extremely large contours
-                            if (area > 300 && area < outputCanvas.width * outputCanvas.height * 0.5) {
-                                // Draw hexagon contour
-                                context.beginPath();
-                                for (let j = 0; j < approx.rows; j++) {
-                                    let point = approx.data32S.subarray(
-                                        j * 2, 
-                                        j * 2 + 2
-                                    );
-                                    
-                                    if (j === 0) {
-                                        context.moveTo(point[0], point[1]);
-                                    } else {
-                                        context.lineTo(point[0], point[1]);
-                                    }
-                                }
-                                context.closePath();
-                                
-                                // // Highlight detected hexagon
-                                // context.strokeStyle = 'lime';
-                                // context.lineWidth = 3;
-                                // context.stroke();
-
-                                // // Draw AR circle in center of hexagon
-                                // let moments = cv.moments(contour);
-                                // if (moments.m00 !== 0) {
-                                //     let cx = moments.m10 / moments.m00;
-                                //     let cy = moments.m01 / moments.m00;
-
-                                //     context.beginPath();
-                                //     context.arc(cx, cy, 50, 0, 2 * Math.PI);
-                                //     context.fillStyle = 'rgba(0, 255, 0, 0.5)';
-                                //     context.fill();
-                                // }
-
-                                statusElement.textContent = 'Hexagon Marker Detected!';
-                            }
-                        }
-
-                        // Clean up
-                        contour.delete(); 
-                        approx.delete();
-                    }
-
-                    // Clean up matrices
-                    gray.delete();
-                    blurred.delete();
-                    edges.delete();
-                    contours.delete();
-                    hierarchy.delete();
-                    frameMat.delete();
-
-                    // Continue processing
-                    requestAnimationFrame(processFrame);
-                } catch (error) {
-                    console.error('Processing error:', error);
-                    statusElement.textContent = 'Error in AR tracking';
-                    requestAnimationFrame(processFrame);
-                }
-            }
-
-            // Start frame processing when video plays
-            videoElement.onplay = processFrame;
+            // Draw scattered characters
+            characters.forEach(char => {
+                fill(char.color);
+                text(char.char, char.x + random(1.5), char.y + random(1.5));
+            });
         }
 
-        // Ensure OpenCV is loaded before starting
-        function onOpenCvError() {
-            statusElement.textContent = 'Failed to load OpenCV.js';
-        }
+        // elipses
+        const ellipseCanvas = document.getElementById('ellipse-canvas');
+        const ctx = ellipseCanvas.getContext('2d');
 
-        // Wait for page and OpenCV to load
-        function waitForOpenCV() {
-            if (typeof cv !== 'undefined') {
-                onOpenCvReady();
-            } else {
-                setTimeout(waitForOpenCV, 100);
+        ellipseCanvas.width = window.innerWidth;
+        ellipseCanvas.height = window.innerHeight;
+
+        let ellipseY = window.innerHeight-30;
+
+        // texture
+        // const stoneTexture = new Image;
+        // stoneTexture.src = "/textures/stone.jpg"; 
+
+        // stoneTexture.onload = function() {
+        //     // Create a pattern from the image
+        //     const pattern = ctx.createPattern(stoneTexture, 'repeat');
+        //     // Set the fill style to the pattern
+        //     ctx.fillStyle = pattern;
+        // }
+
+        // Function to draw a random ellipse
+        function drawRandomEllipse(x, y) {
+            // Random ellipse parameters
+            const width = Math.random() * 150 + 50; // 50-200 width
+            const height = Math.random() * 20 + 50; // 30-100 height
+            const rotation = Math.random() * Math.PI / 2 - Math.PI / 4; // Random rotation
+            
+            // Save canvas state
+            ctx.save();
+
+            // Translate to click position
+            ctx.translate(window.innerWidth/2, ellipseY-height/2);
+            ellipseY -= height;
+            
+            // Rotate
+            ctx.rotate(rotation);
+
+            // Set random fill color
+            ctx.fillStyle = '#ffffff';
+
+            // Draw ellipse
+            ctx.beginPath();
+            ctx.ellipse(0, 0, width / 2, height / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+
+            // Restore canvas state
+            ctx.restore();
+
+            // Log ellipse details
+            console.log({
+                x, 
+                y, 
+                width, 
+                height, 
+                rotation: rotation * 180 / Math.PI, // convert to degrees
+                color: ctx.fillStyle
+            });
+
+            if (ellipseY < 0) {
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                ellipseY = window.innerHeight-30;
             }
         }
-        
-        // Start initialization
-        document.addEventListener('DOMContentLoaded', waitForOpenCV);
+
+        ellipseCanvas.addEventListener('click', (e) => {
+            // Get click coordinates
+            const rect = ellipseCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Draw random ellipse at click location
+            drawRandomEllipse(x, y);
+        });
+
     </script>
+
 </body>
 </html>
