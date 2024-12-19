@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <script src="js/Pattern.js"></script>
+    <script src="js/Cairn.js"></script>
+    <script src="js/Background.js"></script>
+    <script src="js/Characters.js"></script>
+    <script src="js/Noise.js"></script>
     <title>Cairn</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <script>
@@ -47,6 +52,13 @@
         }
     </script>
     <style>
+        @font-face {
+            font-family: "dindong";
+            src: url("./assets/DINdong.ttf");
+        }
+        .dindong {
+            font-family: "dindong";
+        }
         body {
             font-family: 'Inter', sans-serif;
             display: flex;
@@ -84,18 +96,18 @@
         .emotion-button:hover {
             background-color: #7EFCA0;
         } */
-        .ellipse-container {
+        /* .ellipse-container {
             text-align: center;
             max-width: 600px;
             padding: 20px;
-        }
-        #ellipse-big {
+        } */
+        /* #ellipse-big {
             position: relative;
             width: 200px;
             height: 100px;
             background-color: beige;
             border-radius: 50%;
-            /* margin: 0 auto 30px; */
+            margin: 0 auto 30px;
             overflow: hidden;
             transition: transform 2s ease-in-out;
         }
@@ -105,7 +117,7 @@
             height: 80px;
             background-color: beige;
             border-radius: 50%;
-            /* margin: 0 auto 30px; */
+            margin: 0 auto 30px;
             overflow: hidden;
             transition: transform 2s ease-in-out;
         }
@@ -115,10 +127,10 @@
             height: 50px;
             background-color: beige;
             border-radius: 50%;
-            /* margin: 0 auto 30px; */
+            margin: 0 auto 30px;
             overflow: hidden;
             transition: transform 2s ease-in-out;
-        }
+        } */
         #texture-overlay {
             position: absolute;
             top: 0;
@@ -130,6 +142,68 @@
             background-repeat: no-repeat;
             opacity: 0.3; /* Adjust opacity as needed */
             mix-blend-mode: normal; /* Experiment with different blend modes */
+        } 
+        .non-dialogue-text {
+            position: absolute;
+            font-family: dindong;
+            font-size: 16px;
+            /* align-self: center; */
+            animation: fadeIn 5s ease-in, fadeOut 5s ease-in forwards;
+        }
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px 25px;
+            font-family: dindong;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(217, 245, 180, 0.8);
+            animation: popIn 0.6s ease-out, fadeOut 5s ease-in forwards;
+            transform-origin: bottom left;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            70% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            70% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -149,7 +223,8 @@
         <button class="emotion-button" onclick="redirectToMeditation('agitated')">agitated</button>
     </div> -->
 
-    <a-entity id="character-container" style="margin-bottom: -300px;"></a-entity>
+    <a-entity id="background" style="margin-bottom: -300px;"></a-entity>
+
 
     <!-- <div class="ellipse-container" style="margin-top:-300px;  margin-bottom: 0px;">
         <div id="ellipse-small" style="margin-left: 50px">
@@ -166,131 +241,44 @@
     <canvas id="ellipse-canvas" style="margin-top: -550px;"></canvas>
 
     <script>
-        function redirectToMeditation(emotion) {
-            // Encode the emotion to handle spaces and special characters
-            window.location.href = `meditation.html?emotion=${encodeURIComponent(emotion)}`;
-        }
-
-        // P5.js sketch for random characters
-        let characters = [];
-        let N;
-        let canvas;
-
-        // Listener for resizing
-        // function resizeCanvas() {
-        //     canvas.width = window.innerWidth;
-        //     canvas.height = window.innerHeight;
+        // function redirectToMeditation(emotion) {
+        //     // Encode the emotion to handle spaces and special characters
+        //     window.location.href = `meditation.html?emotion=${encodeURIComponent(emotion)}`;
         // }
-        // resizeCanvas();
-        // window.addEventListener('resize', resizeCanvas);
+
+        let canvas;
+        let bgd;
 
         function setup() {
             canvas = createCanvas(window.innerWidth, window.innerHeight);
-            console.log("width: " + window.innerWidth);
-            console.log("height: " + window.innerHeight);
-            canvas.parent('character-container');
-            textAlign(CENTER, CENTER);
-            textSize(10);
-
-            // Calculate the number of characters based on the window size
-            N = window.innerWidth * window.innerHeight / 4500;
-
-            // Generate initial random characters
-            for (let i = 0; i < N; i++) {
-                characters.push({
-                    x: random(width),
-                    y: random(height),
-                    char: char(int(random(33, 126))),
-                    // color: color(random(255), random(255), random(255))
-                    color: color(0, 0, 0)
-                });
-            }
+            // console.log("width: " + window.innerWidth + " height: " + window.innerHeight);
+            canvas.parent('background');
+            bgd = new Background();
         }
 
         function draw() {
             clear();
-
-            // Draw scattered characters
-            characters.forEach(char => {
-                fill(char.color);
-                text(char.char, char.x + random(1.5), char.y + random(1.5));
-            });
+            bgd.update();
+            bgd.display();
         }
 
-        // elipses
+        function mousePressed() {
+            bgd.mousePressed(mouseX, mouseY);
+        }
+
         const ellipseCanvas = document.getElementById('ellipse-canvas');
         const ctx = ellipseCanvas.getContext('2d');
 
         ellipseCanvas.width = window.innerWidth;
         ellipseCanvas.height = window.innerHeight;
 
-        let ellipseY = window.innerHeight-30;
+        let cairn = new Cairn();
+        cairn.display();
 
-        // texture
-        // const stoneTexture = new Image;
-        // stoneTexture.src = "/textures/stone.jpg"; 
-
-        // stoneTexture.onload = function() {
-        //     // Create a pattern from the image
-        //     const pattern = ctx.createPattern(stoneTexture, 'repeat');
-        //     // Set the fill style to the pattern
-        //     ctx.fillStyle = pattern;
-        // }
-
-        // Function to draw a random ellipse
-        function drawRandomEllipse(x, y) {
-            // Random ellipse parameters
-            const width = Math.random() * 150 + 50; // 50-200 width
-            const height = Math.random() * 20 + 50; // 30-100 height
-            const rotation = Math.random() * Math.PI / 2 - Math.PI / 4; // Random rotation
-            
-            // Save canvas state
-            ctx.save();
-
-            // Translate to click position
-            ctx.translate(window.innerWidth/2, ellipseY-height/2);
-            ellipseY -= height;
-            
-            // Rotate
-            ctx.rotate(rotation);
-
-            // Set random fill color
-            ctx.fillStyle = '#ffffff';
-
-            // Draw ellipse
-            ctx.beginPath();
-            ctx.ellipse(0, 0, width / 2, height / 2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-
-            // Restore canvas state
-            ctx.restore();
-
-            // Log ellipse details
-            console.log({
-                x, 
-                y, 
-                width, 
-                height, 
-                rotation: rotation * 180 / Math.PI, // convert to degrees
-                color: ctx.fillStyle
-            });
-
-            if (ellipseY < 0) {
-                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-                ellipseY = window.innerHeight-30;
-            }
-        }
-
-        ellipseCanvas.addEventListener('click', (e) => {
-            // Get click coordinates
-            const rect = ellipseCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            // Draw random ellipse at click location
-            drawRandomEllipse(x, y);
+        document.addEventListener('click', function(e) {
+            cairn.talk();
         });
+        
 
     </script>
 
