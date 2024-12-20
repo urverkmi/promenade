@@ -59,19 +59,11 @@
             bgd.mousePressed(mouseX, mouseY);
         }
 
-        let analyzer;
+        let analyzer = new PatternAnalyzer();
 
         document.addEventListener('click', function(e) {
             if (!cairn.isTalking) {
-                if (analyzer === undefined) {
-                    analyzer = new PatternAnalyzer();
-                }
                 const response = analyzer.push(new Interaction('click', undefined, new Loc(e.clientX, e.clientY), undefined));
-                console.log(response);
-                if (response.length > 0) {
-                    cairn.talk(response);
-                    analyzer = undefined; // reset
-                }
             }
         });
         

@@ -50,20 +50,25 @@ class PatternAnalyzer {
         this.client = new CairnClient(WORKER_URL);
     }
 
-    push(interaction) {
+    async push(interaction) {
         this.aggregator.push(interaction);
-        return this.eval();
+        const response = await this.eval();
+        if (response.length > 0) {
+            console.log("yo!!");
+            cairn.talk(response);
+        }
     }
 
     eval() {
         const shouldEnd = Math.floor(Math.random() * (101));
         console.log("shouldEnd: " + shouldEnd);
-        if (shouldEnd > 90) {
+        if (shouldEnd > 80) {
             const response = this.client.makeRequest(
                 new DetectedPattern(this.analyzeRhythm(this.aggregator.durations), 
                 this.analyzeSpacial(this.aggregator.locations), 
                 `The interaction involved ${this.aggregator.interactions.length+1} clicks.`
             ));
+            this.aggregator = new InteractionAggregator(); // reset
             // let placeholder = 'A weathered whisper emerges from ancient stone... \nWhen raindrops cluster before the wind claims them, do they remember their unity? Your gestures echo the dance of autumn leaves - gathering in communion before the decisive gust that charts their journey. \nSuch is the nature of moments that build toward change: first the gathering, then the leap. \nWhat patterns do you recognize in your own moments of hesitation before transformation? \nThe stones hold your silence...';
             return response;
         } else {
