@@ -1,16 +1,16 @@
 // invoked from p5js functions
 
-class Background {
+class Scene {
     constructor() {
         this.characters = new Characters();
         // Array to store all radial patterns
         this.patterns = [];
-        this.noise = new Noise();
+        // this.noise = new Noise();
     }
 
     update() {
         this.characters.update();
-        this.noise.update();
+        // this.noise.update();
     }
 
     display() {

@@ -1,0 +1,155 @@
+@font-face {
+    font-family: "dindong";
+    src: url("../assets/DINdong.ttf");
+}
+.dindong {
+    font-family: "dindong";
+}
+body {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background-color: #d9d9d9;
+    margin: 0;
+}
+h1 {
+    margin-bottom: 100px;
+    color: #333;
+    font-weight: 400;
+    font-size: 15px;
+}
+/* .button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0px;
+    width: 350px;
+}
+.emotion-button {
+    padding: 15px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    background-color: #d9d9d9;
+    color: #5C5C5C;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.emotion-button:hover {
+    background-color: #7EFCA0;
+} */
+/* .ellipse-container {
+    text-align: center;
+    max-width: 600px;
+    padding: 20px;
+} */
+/* #ellipse-big {
+    position: relative;
+    width: 200px;
+    height: 100px;
+    background-color: beige;
+    border-radius: 50%;
+    margin: 0 auto 30px;
+    overflow: hidden;
+    transition: transform 2s ease-in-out;
+}
+#ellipse-medium {
+    position: relative;
+    width: 150px;
+    height: 80px;
+    background-color: beige;
+    border-radius: 50%;
+    margin: 0 auto 30px;
+    overflow: hidden;
+    transition: transform 2s ease-in-out;
+}
+#ellipse-small {
+    position: relative;
+    width: 70px;
+    height: 50px;
+    background-color: beige;
+    border-radius: 50%;
+    margin: 0 auto 30px;
+    overflow: hidden;
+    transition: transform 2s ease-in-out;
+} */
+#texture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('textures/stone.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0.3; /* Adjust opacity as needed */
+    mix-blend-mode: normal; /* Experiment with different blend modes */
+} 
+.non-dialogue-text {
+    position: absolute;
+    font-family: dindong;
+    font-size: 16px;
+    /* align-self: center; */
+    animation: fadeIn 5s ease-in, fadeOut 5s ease-in forwards;
+}
+.speech-bubble {
+    position: absolute;
+    background-color: rgba(256, 256, 256, 0.6);
+    border-radius: 20px;
+    padding: 15px 25px;
+    font-family: dindong;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    line-height: 1.2;
+    box-shadow: 0 2px 10px rgba(217, 245, 180, 0.8);
+    animation: popIn 0.6s ease-out, fadeOut 5s ease-in forwards;
+    transform-origin: bottom left;
+}
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 20px;
+    border-width: 10px 10px 0;
+    border-style: solid;
+    border-color: white transparent transparent;
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    70% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}

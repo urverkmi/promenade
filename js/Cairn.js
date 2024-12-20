@@ -1,8 +1,9 @@
 class Cairn {
-    constructor() {
+    constructor(ctx) {
         function getRandomInt(min, max) {
             return Math.floor(Math.random() * (max-min+1)) + min;
         }
+        this.ctx = ctx;
         this.cairnHeight = getRandomInt(3, 8);
         this.spacing = window.innerHeight/16;
         this.params = [];
@@ -29,38 +30,38 @@ class Cairn {
         function draw(ctx, pattern, texture, ellipseY, param) {
             ctx.save();
 
-                // Translate to click position
-                ctx.translate(window.innerWidth/2, ellipseY-param.height/2);
-                
-                // Rotate
-                ctx.rotate(param.rotation);
+            // Translate to click position
+            ctx.translate(window.innerWidth/2, ellipseY-param.height/2);
+            
+            // Rotate
+            ctx.rotate(param.rotation);
 
-                // Create clipping path for ellipse
-                ctx.beginPath();
-                ctx.ellipse(0, 0, param.width / 2, param.height / 2, 0, 0, Math.PI * 2);
-                ctx.clip();
+            // Create clipping path for ellipse
+            ctx.beginPath();
+            ctx.ellipse(0, 0, param.width / 2, param.height / 2, 0, 0, Math.PI * 2);
+            ctx.clip();
 
-                ctx.save();
+            ctx.save();
 
-                // Calculate scaling factors to fit texture to ellipse bounds
-                const scaleX = param.width / texture.width;
-                const scaleY = param.height / texture.height;
+            // Calculate scaling factors to fit texture to ellipse bounds
+            const scaleX = param.width / texture.width;
+            const scaleY = param.height / texture.height;
 
-                // Scale texture to fit exactly in the ellipse bounds
-                ctx.scale(scaleX, scaleY);
-                
-                // Calculate pattern bounds
-                const patternX = -texture.width/2;
-                const patternY = -texture.height/2;
+            // Scale texture to fit exactly in the ellipse bounds
+            ctx.scale(scaleX, scaleY);
+            
+            // Calculate pattern bounds
+            const patternX = -texture.width/2;
+            const patternY = -texture.height/2;
 
-                // Set pattern as fill style
-                ctx.fillStyle = pattern;
+            // Set pattern as fill style
+            ctx.fillStyle = pattern;
 
-                // Draw pattern-filled rectangle
-                ctx.fillRect(patternX, patternY, texture.width, texture.height);
+            // Draw pattern-filled rectangle
+            ctx.fillRect(patternX, patternY, texture.width, texture.height);
 
-                ctx.restore();
-                ctx.restore();
+            ctx.restore();
+            ctx.restore();
         }
         // create and load the texture images outside the function
         const texture1 = new Image();
@@ -76,10 +77,10 @@ class Cairn {
         // Wait for texture to load before drawing
         texture1.onload = function() {
             // Create pattern once texture is loaded
-            const pattern = ctx.createPattern(texture1, 'repeat');
+            const pattern = cairn.ctx.createPattern(texture1, 'repeat');
             for (let i = 0; i < cairn.cairnHeight; i++) {
                 if (cairn.params[i].texture == 1) {
-                    draw(ctx, pattern, texture1, cairn.ellipseY[i], cairn.params[i]);
+                    draw(cairn.ctx, pattern, texture1, cairn.ellipseY[i], cairn.params[i]);
                 }
             }
         };
@@ -88,12 +89,12 @@ class Cairn {
             console.error('Error loading texture image');
         };
 
-        // repeat for all the textures
+        // repeat for the remaining textures
         texture2.onload = function() {
-            const pattern = ctx.createPattern(texture2, 'repeat');
+            const pattern = cairn.ctx.createPattern(texture2, 'repeat');
             for (let i = 0; i < cairn.cairnHeight; i++) {
                 if (cairn.params[i].texture == 2) {
-                    draw(ctx, pattern, texture2, cairn.ellipseY[i], cairn.params[i]);
+                    draw(cairn.ctx, pattern, texture2, cairn.ellipseY[i], cairn.params[i]);
                 }
             }
         };
@@ -102,10 +103,10 @@ class Cairn {
         };
 
         texture3.onload = function() {
-            const pattern = ctx.createPattern(texture3, 'repeat');
+            const pattern = cairn.ctx.createPattern(texture3, 'repeat');
             for (let i = 0; i < cairn.cairnHeight; i++) {
                 if (cairn.params[i].texture == 3) {
-                    draw(ctx, pattern, texture3, cairn.ellipseY[i], cairn.params[i]);
+                    draw(cairn.ctx, pattern, texture3, cairn.ellipseY[i], cairn.params[i]);
                 }
             }
         };
@@ -114,7 +115,7 @@ class Cairn {
         };
     }
 
-    async talk() {
+    async talk(response) {
         function splitResponse(response) {
             // Split into initial segments
             const segments = response.split(/\n|\?|\. /g);
@@ -158,7 +159,6 @@ class Cairn {
         }
         if (!this.isTalking) {
             this.isTalking = true;
-            let response = 'A weathered whisper emerges from ancient stone... \nWhen raindrops cluster before the wind claims them, do they remember their unity? Your gestures echo the dance of autumn leaves - gathering in communion before the decisive gust that charts their journey. \nSuch is the nature of moments that build toward change: first the gathering, then the leap. \nWhat patterns do you recognize in your own moments of hesitation before transformation? \nThe stones hold your silence...';
             const messages = splitResponse(response);
             for (let i = 0; i < messages.length; i++) {
                 if (i > 0 && i < messages.length-1) {
