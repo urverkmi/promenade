@@ -30,6 +30,7 @@ class CairnClient {
           
           // Access the content from Anthropic's response structure
           const message = data.content[0].text;
+          // let message = "testing";
           console.log("Retrieved response:", message);
           return message;
       

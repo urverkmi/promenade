@@ -13,26 +13,19 @@
     <title>Cairn</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" /> 
-    <script>
-        // const WORKER_URL = process.env.NODE_ENV === 'development' 
-        //     ? 'http://127.0.0.1:8787'
-        //     : 'https://cairn-worker.workers.dev';
-        const WORKER_URL = 'http://127.0.0.1:8787';
-        // const WORKER_URL = 'https://cairn-worker.cairn-worker.workers.dev/';
-        const client = new CairnClient(WORKER_URL);
-    </script>
 </head>
 <body>
 
     <!-- <button id="apiButton" onclick="client.sendInteraction(new Interaction(3))" >Call worker</button> -->
 
+    <!-- <div class="interactive-area" id="interactiveArea"></div> -->
     <a-entity id="scene" style="margin-bottom: -300px;"></a-entity>
     <canvas id="ellipse-canvas" style="margin-top: -550px;"></canvas>
 
     <script>
 
         let canvas;
-        let bgd;
+        let scene;
 
         const ellipseCanvas = document.getElementById('ellipse-canvas');
         const ctx = ellipseCanvas.getContext('2d');
@@ -42,21 +35,31 @@
         let cairn = new Cairn(ctx);
         cairn.display();
 
+        // const visualEffects = new VisualEffects();
+
         function setup() {
             canvas = createCanvas(window.innerWidth, window.innerHeight);
             // console.log("width: " + window.innerWidth + " height: " + window.innerHeight);
             canvas.parent('scene');
-            bgd = new Scene();
+            scene = new Scene();
         }
 
         function draw() {
             clear();
-            bgd.update();
-            // bgd.display();
+            scene.update();
+            scene.display();
+        }
+
+        function mouseDragged() {
+            scene.handleMoved(mouseX, mouseY);
         }
 
         function mousePressed() {
-            bgd.mousePressed(mouseX, mouseY);
+            scene.handlePressed(mouseX, mouseY);
+        }
+
+        function mouseReleased() {
+            scene.handleReleased();
         }
 
         let analyzer = new PatternAnalyzer();

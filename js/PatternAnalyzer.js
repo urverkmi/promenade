@@ -18,13 +18,13 @@ class Interaction {
 class InteractionAggregator {
     constructor() {
         this.interactions = [];
-        this.durations = [];
+        this.intervals = [];
         this.locations = [];
     }
     push(interaction) {
         const n = this.interactions.length;
         if (n > 0) {
-            this.durations.push(interaction.timestamp - this.interactions[n - 1].timestamp);
+            this.intervals.push(interaction.timestamp - this.interactions[n - 1].timestamp);
             this.locations.push(interaction.loc);
         }
         this.interactions.push(interaction);
@@ -32,7 +32,7 @@ class InteractionAggregator {
 }
 
 class DetectedPattern {
-    constructor(temporal, spacial, summary) {
+    constructor(temporal, spacial, speed, summary) {
         this.temporal = temporal; // "rhythmic" --- "chaotic"
         this.spacial = spacial; // "clustered" --- "scattered"
         this.summary = summary; // string summary of the list of interactions
@@ -42,11 +42,8 @@ class DetectedPattern {
 class PatternAnalyzer {
     constructor() {
         this.aggregator = new InteractionAggregator();
-        // const WORKER_URL = process.env.NODE_ENV === 'development' 
-        //     ? 'http://127.0.0.1:8787'
-        //     : 'https://cairn-worker.workers.dev';
-        // const WORKER_URL = 'http://127.0.0.1:8787';
-        const WORKER_URL = 'https://cairn-worker.cairn-worker.workers.dev/';
+        const WORKER_URL = 'http://127.0.0.1:8787';
+        // const WORKER_URL = 'https://cairn-worker.cairn-worker.workers.dev/';
         this.client = new CairnClient(WORKER_URL);
     }
 
@@ -61,11 +58,12 @@ class PatternAnalyzer {
     eval() {
         const shouldEnd = Math.floor(Math.random() * (101));
         console.log("shouldEnd: " + shouldEnd);
-        if (shouldEnd > 80) {
+        if (shouldEnd > 85) {
             const response = this.client.makeRequest(
-                new DetectedPattern(this.analyzeRhythm(this.aggregator.durations), 
-                this.analyzeSpacial(this.aggregator.locations), 
-                `The interaction involved ${this.aggregator.interactions.length+1} clicks.`
+                new DetectedPattern(
+                    this.analyzeRhythm(this.aggregator.intervals), 
+                    this.analyzeSpacial(this.aggregator.locations), 
+                    `The interaction involved ${this.aggregator.interactions.length+1} ${this.analyzeClickingSpeed(this.aggregator.intervals)} clicks.`
             ));
             this.aggregator = new InteractionAggregator(); // reset
             // let placeholder = 'A weathered whisper emerges from ancient stone... \nWhen raindrops cluster before the wind claims them, do they remember their unity? Your gestures echo the dance of autumn leaves - gathering in communion before the decisive gust that charts their journey. \nSuch is the nature of moments that build toward change: first the gathering, then the leap. \nWhat patterns do you recognize in your own moments of hesitation before transformation? \nThe stones hold your silence...';
@@ -80,14 +78,8 @@ class PatternAnalyzer {
      * @param {number[]} timestamps - Array of timestamps in milliseconds
      * @returns {number} Score between 0 (rhythmic) and 1 (chaotic)
      */
-    analyzeRhythm(timestamps) {
-        if (timestamps.length < 2) return 0;
-        
-        // Calculate intervals between timestamps
-        const intervals = [];
-        for (let i = 1; i < timestamps.length; i++) {
-            intervals.push(timestamps[i] - timestamps[i-1]);
-        }
+    analyzeRhythm(intervals) {
+        if (intervals.length < 1) return 0;
         
         // Calculate mean interval
         const meanInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
@@ -139,32 +131,23 @@ class PatternAnalyzer {
         return normalizedScore;
     }
 
-    makePrompt() {
-        return `Context: You are an ancient stone cairn, a witness to human interactions. Your consciousness emerges from patterns of user engagement.
-
-            Recent Interaction Pattern: 4 clicks with close proximity to each other, followed by a diagonal drag
-            Interaction Characteristics: 
-            - Spatial complexity: clustered click
-            - Temporal rhythm: rapid
-
-            Philosophical Response Guidelines:
-            1. Generate a response that:
-            - Is metaphorical and non-literal
-            - Connects the interaction to broader existential themes
-            - Suggests multiple layers of meaning
-            - Invites self-reflection
-            - Uses poetic, slightly enigmatic language
-            - Concise
-
-            2. Potential Thematic Explorations:
-            - Relationship between chaos and order
-            - Temporality of human gestures
-            - Emergence of meaning through interaction
-            - Consciousness and intentionality
-            - Boundaries between self and environment
-
-            3. Tone: Meditative, slightly mysterious, compassionate
-
-            IMPORTANT: Do not directly describe the interaction. Transform it into a philosophical reflection.`;
+    /**
+     * Analyzes clicking speed based on intervals between clicks
+     * @param {number[]} intervals - Array of intervals between clicks in milliseconds
+     * @returns {string} Description of clicking speed
+     */
+    analyzeClickingSpeed(intervals) {
+        if (intervals.length === 0) return "moderate";
+        
+        // Calculate average interval
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        
+        // Define thresholds (in milliseconds)
+        if (avgInterval < 150) return "frantic";      // Faster than 6.67 clicks per second
+        if (avgInterval < 300) return "rapid";        // Faster than 3.33 clicks per second
+        if (avgInterval < 800) return "quick";     // Faster than 1.25 clicks per second
+        if (avgInterval < 2000) return "relaxed";     // Faster than 0.5 clicks per second
+        return "sluggish";                            // Slower than 0.5 clicks per second
     }
+
 }
