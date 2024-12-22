@@ -42,8 +42,8 @@ class DetectedPattern {
 class PatternAnalyzer {
     constructor() {
         this.aggregator = new InteractionAggregator();
-        const WORKER_URL = 'http://127.0.0.1:8787';
-        // const WORKER_URL = 'https://cairn-worker.cairn-worker.workers.dev/';
+        // const WORKER_URL = 'http://127.0.0.1:8787';
+        const WORKER_URL = 'https://cairn-worker.cairn-worker.workers.dev/';
         this.client = new CairnClient(WORKER_URL);
     }
 

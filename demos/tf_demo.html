@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Outdoor Scene Material Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://unpkg.com/@tensorflow-models/deeplab@0.2.1/dist/deeplab.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #webcam-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+        }
+        #webcam, #output {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #material-breakdown {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .material-item {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Outdoor Material Detector</h1>
+    <div id="webcam-container">
+        <video id="webcam" width="640" height="480"></video>
+        <canvas id="output" width="640" height="480"></canvas>
+    </div>
+    <div id="material-breakdown"></div>
+    <button id="start-button">Start Detecting</button>
+
+    <script>
+        // Color mapping for common materials
+        const MATERIAL_COLORS = {
+            'grass': '#4CAF50',
+            'concrete': '#9E9E9E',
+            'rock': '#795548',
+            'ground': '#8D6E63',
+            'pavement': '#616161',
+            'tree': '#2E7D32',
+            'sky': '#81D4FA'
+        };
+
+        const materialBreakdown = document.getElementById('material-breakdown');
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('output');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('start-button');
+
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                'video': { facingMode: 'environment' }
+            });
+            video.srcObject = stream;
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play();
+                    resolve(video);
+                };
+            });
+        }
+
+        async function detectMaterials() {
+            // Load DeepLab model (Cityscapes variant is good for outdoor scenes)
+            const model = await deeplab.load({
+                base: 'cityscapes',
+                quantizationBytes: 4
+            });
+
+            function processFrame() {
+                // Draw current video frame to canvas
+                ctx.drawImage(video, 0, 0, 640, 480);
+
+                // Perform semantic segmentation
+                model.segment(canvas).then(segmentation => {
+                    // Get segmentation data
+                    const { height, width, data } = segmentation;
+
+                    // Colorize and analyze segmentation
+                    const materialCounts = {};
+                    
+                    // Process each pixel
+                    for (let y = 0; y < height; y++) {
+                        for (let x = 0; x < width; x++) {
+                            const index = (y * width + x) * 4;
+                            const segmentClass = data[index];
+                            
+                            // Map segment class to material names
+                            const materialName = mapSegmentToMaterial(segmentClass);
+                            
+                            // Count material pixels
+                            if (materialName) {
+                                materialCounts[materialName] = 
+                                    (materialCounts[materialName] || 0) + 1;
+                            }
+                        }
+                    }
+
+                    // Update material breakdown
+                    updateMaterialBreakdown(materialCounts, width * height);
+
+                    // Continue processing frames
+                    requestAnimationFrame(processFrame);
+                });
+            }
+
+            // Start processing
+            processFrame();
+        }
+
+        function mapSegmentToMaterial(segmentClass) {
+            // Mapping depends on the specific model's training
+            // This is a simplified example
+            const materialMap = {
+                7: 'ground',
+                8: 'grass',
+                11: 'concrete',
+                12: 'pavement',
+                13: 'rock',
+                17: 'sky',
+                19: 'tree'
+            };
+            return materialMap[segmentClass] || null;
+        }
+
+        function updateMaterialBreakdown(counts, totalPixels) {
+            // Clear previous breakdown
+            materialBreakdown.innerHTML = '';
+
+            // Calculate and display material percentages
+            Object.entries(counts).forEach(([material, pixelCount]) => {
+                const percentage = ((pixelCount / totalPixels) * 100).toFixed(2);
+                
+                if (percentage > 1) { // Only show materials covering >1% of the scene
+                    const materialElement = document.createElement('div');
+                    materialElement.className = 'material-item';
+                    materialElement.innerHTML = `
+                        <span style="color:${MATERIAL_COLORS[material] || '#000'}">
+                            ${material}: ${percentage}%
+                        </span>
+                    `;
+                    materialBreakdown.appendChild(materialElement);
+                }
+            });
+        }
+
+        // Start detection on button click
+        startButton.addEventListener('click', async () => {
+            await setupCamera();
+            await detectMaterials();
+            startButton.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
