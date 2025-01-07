@@ -25,4 +25,6 @@ class Characters {
             text(char.char, char.x + random(1.5), char.y + random(1.5));
         });
     }
+
+    
 }

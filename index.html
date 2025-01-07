@@ -6,19 +6,14 @@
     <script src="js/Cairn.js"></script>
     <script src="js/CairnClient.js"></script>
     <script src="js/Characters.js"></script>
-    <!-- <script src="js/Noise.js"></script> -->
     <script src="js/Scene.js"></script>
-    <!-- <script src="js/Pattern.js"></script> -->
     <script src="js/PatternAnalyzer.js"></script>
-    <title>Cairn</title>
+    <title>Sensei Cairn</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" /> 
 </head>
 <body>
 
-    <!-- <button id="apiButton" onclick="client.sendInteraction(new Interaction(3))" >Call worker</button> -->
-
-    <!-- <div class="interactive-area" id="interactiveArea"></div> -->
     <a-entity id="scene" style="margin-bottom: -300px;"></a-entity>
     <canvas id="ellipse-canvas" style="margin-top: -550px;"></canvas>
 
@@ -37,7 +32,6 @@
 
         function setup() {
             canvas = createCanvas(window.innerWidth, window.innerHeight);
-            // console.log("width: " + window.innerWidth + " height: " + window.innerHeight);
             canvas.parent('scene');
             scene = new Scene();
         }

@@ -38,20 +38,15 @@ class Scene {
         this.area = document.getElementById('scene');
         this.isDragging = false;
         this.lastMoveTime = Date.now();
-        this.emojis = [];
         this.curves = [];
         // Initialize curves
         for (let i = 0; i < 5; i++) {
             this.curves.push(new Curve());
         }
-        // Array to store all radial patterns
-        // this.patterns = [];
-        // this.noise = new Noise();
     }
 
     update() {
         this.characters.update();
-        // this.noise.update();
         // Update and draw curves
         this.curves.forEach(curve => {
             curve.update();
@@ -60,28 +55,9 @@ class Scene {
 
     display() {
         this.characters.display();
-        // display emojis
-        this.emojis.forEach(emoji => {
-            textSize(20);
-            text(emoji.emoji, emoji.x, emoji.y);
-            textSize(9);
-        });
         this.curves.forEach(curve => {
             curve.draw();
         });
-
-        // this.noise.display();
-
-        // draw patterns
-        // for (let i = this.patterns.length - 1; i >= 0; i--) {
-        //     this.patterns[i].update();
-        //     this.patterns[i].display();
-
-        //     // Remove pattern if it's fully faded
-        //     if (this.patterns[i].isDead()) {
-        //         this.patterns.splice(i, 1);
-        //     }
-        // }
     }
 
     createParticles(x, y) {
@@ -119,15 +95,12 @@ class Scene {
     }
 
     handlePressed(mouseX, mouseY) {
-        // Create a new radial pattern at mouse click location
-        // this.patterns.push(new Pattern(mouseX, mouseY));
         const effects = [
             () => this.createParticles(mouseX, mouseY)
         ];
         effects[Math.floor(Math.random() * effects.length)]();
         console.log("dragging true");
         this.isDragging = true;
-        // this.emojis.push({emoji: '☀️', x: mouseX, y: mouseY});
     }
 
     handleReleased() {
@@ -140,14 +113,9 @@ class Scene {
         if (now - this.lastMoveTime < this.moveThrottle) return;
         
         this.lastMoveTime = now;
-        console.log("moving, dragging is " + this.isDragging);
         
         if (this.isDragging) {
             this.createTrail(mouseX, mouseY);
         }
-    }
-
-    clearEmojis() {
-        this.emojis = [];
     }
 }
