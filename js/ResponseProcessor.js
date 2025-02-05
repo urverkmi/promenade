@@ -1,6 +1,7 @@
 class ResponseProcessor {
     constructor() {
         this.gpp = new GraphicProcessor();
+        this.displaying = false;
     }
 
     async display(response) {
@@ -48,6 +49,8 @@ class ResponseProcessor {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
+        this.displaying = true;
+
         const messages = splitResponse(response);
         for (let i = 0; i < messages.length; i++) {
             // display plain text
@@ -60,6 +63,12 @@ class ResponseProcessor {
                 await delay(6000);
             }
         }
+
+        this.displaying = false;
+    }
+
+    isDisplaying() {
+        return this.displaying;
     }
 
     draw() {
