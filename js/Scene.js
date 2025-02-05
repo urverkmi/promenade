@@ -1,97 +1,54 @@
 // invoked from p5js functions
 
-class Curve {
-    constructor() {
-        this.points = [];
-        this.noiseOffset = random(1000);
-        this.color = color(random(200, 255), random(200, 255), 255, 50);
-        this.yStart = random(height);
-        this.amplitude = random(30, 80);
-        this.speed = random(0.001, 0.003);
-    }
-
-    update() {
-        this.points = [];
-        for (let x = 0; x < width; x += 20) {
-            let y = this.yStart + 
-                sin(x * 0.01 + frameCount * this.speed) * this.amplitude +
-                noise(x * 0.01, this.noiseOffset + frameCount * 0.01) * this.amplitude;
-            this.points.push(createVector(x, y));
-        }
-    }
-
-    draw() {
-        noFill();
-        stroke(this.color);
-        strokeWeight(2);
-        beginShape();
-        for (let point of this.points) {
-            curveVertex(point.x, point.y);
-        }
-        endShape();
-    }
-}
 
 class Scene {
+
     constructor() {
-        this.characters = new Characters();
-        this.area = document.getElementById('scene');
-        this.isDragging = false;
-        this.lastMoveTime = Date.now();
-        this.curves = [];
-        // Initialize curves
-        for (let i = 0; i < 5; i++) {
-            this.curves.push(new Curve());
-        }
+        // this.stick = new Stick();
     }
 
     update() {
-        this.characters.update();
-        // Update and draw curves
-        this.curves.forEach(curve => {
-            curve.update();
-        });
     }
 
-    display() {
-        this.characters.display();
-        this.curves.forEach(curve => {
-            curve.draw();
-        });
-    }
-
-    createParticles(x, y) {
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
-        for (let i = 0; i < 8; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = `${x}px`;
-            particle.style.top = `${y}px`;
-            particle.style.width = '8px';
-            particle.style.height = '8px';
-            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-            
-            const angle = (Math.PI * 2 * i) / 8;
-            const distance = 50 + Math.random() * 50;
-            const tx = Math.cos(angle) * distance;
-            const ty = Math.sin(angle) * distance;
-            
-            particle.style.setProperty('--tx', `${tx}px`);
-            particle.style.setProperty('--ty', `${ty}px`);
-            
-            this.area.appendChild(particle);
-            particle.addEventListener('animationend', () => particle.remove());
+    display(img, stickImg) {
+        background(255);
+        
+        // Calculate aspect ratio of the image
+        let imgAspectRatio = img.width / img.height;
+        let windowAspectRatio = window.innerWidth / window.innerHeight;
+        
+        let newWidth, newHeight;
+        let ratio = 0.6;
+        
+        // Determine dimensions while maintaining aspect ratio
+        if (windowAspectRatio > imgAspectRatio) {
+            // Window is wider than image
+            newHeight = window.innerHeight * ratio;
+            newWidth = window.innerHeight * imgAspectRatio * ratio;
+        } else {
+            // Window is taller than image
+            newWidth = window.innerWidth * ratio;
+            newHeight = window.innerWidth / imgAspectRatio * ratio;
         }
+
+        // Center the image
+        imageMode(CENTER);
+        image(img, window.innerWidth/2, window.innerHeight/2, newWidth, newHeight);
+
+        // display phone screen
+        let phoneW = newWidth*0.25;
+        let phoneH = newHeight*0.65;
+        push();
+        rect(window.innerWidth/2 - phoneW/2, window.innerHeight/2 - phoneH/2*1.2, phoneW, phoneH); 
+        pop();
+
+        // display stick figure
+        image(stickImg, window.innerWidth/2 - phoneW/4, window.innerHeight/2 - phoneH/7, newWidth*0.06, newHeight*0.17);
+        
     }
 
-    createTrail(x, y) {
-        const trail = document.createElement('div');
-        trail.className = 'trail';
-        trail.style.left = `${x - 5}px`;
-        trail.style.top = `${y - 5}px`;
-        trail.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
-        this.area.appendChild(trail);
-        trail.addEventListener('animationend', () => trail.remove());
+    windowResized() {
+        resizeCanvas(window.innerWidth, window.innerHeight);
     }
 
     handlePressed(mouseX, mouseY) {

@@ -11,40 +11,6 @@ class InteractionTracker {
                 totalInteractionDuration: 0
             }
         };
-
-        // Predefined interaction patterns with philosophical responses
-        this.patterns = [
-            {
-                name: "UpperTriadic Meditation",
-                condition: (tracker) => {
-                    // Specific interaction: 3 clicks in upper third + drag
-                    return (
-                        tracker.interactions.clicks.filter(click => click.y < window.innerHeight / 3).length === 3 &&
-                        tracker.interactions.drags.length > 0
-                    );
-                },
-                response: [
-                    "In the fragility of movement, order emerges.",
-                    "Chaos whispers: your intentions reshape the landscape of possibility.",
-                    "Three touches - a ritual of understanding beyond comprehension."
-                ]
-            },
-            {
-                name: "DiagonalDisruption",
-                condition: (tracker) => {
-                    // Complex diagonal drag across screen
-                    const drags = tracker.interactions.drags;
-                    return drags.length > 0 && 
-                           Math.abs(drags[drags.length-1].endX - drags[drags.length-1].startX) > window.innerWidth * 0.7 &&
-                           Math.abs(drags[drags.length-1].endY - drags[drags.length-1].startY) > window.innerHeight * 0.5;
-                },
-                response: [
-                    "Boundaries dissolve when movement transcends expectation.",
-                    "The diagonal path - where intention meets entropy.",
-                    "Your gesture: a momentary constellation of meaning."
-                ]
-            }
-        ];
     }
 
     recordClick(x, y) {
@@ -68,20 +34,5 @@ class InteractionTracker {
         });
 
         this.interactions.drags = this.interactions.drags.slice(-5);
-    }
-
-    detectPatterns() {
-        // Check each defined pattern
-        const matchedPatterns = this.patterns.filter(pattern => 
-            pattern.condition(this)
-        );
-
-        // Return a random response from matched patterns
-        if (matchedPatterns.length > 0) {
-            const selectedPattern = matchedPatterns[Math.floor(Math.random() * matchedPatterns.length)];
-            return selectedPattern.response[Math.floor(Math.random() * selectedPattern.response.length)];
-        }
-
-        return null;
     }
 }

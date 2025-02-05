@@ -32,7 +32,8 @@ class InteractionAggregator {
 }
 
 class DetectedPattern {
-    constructor(temporal, spacial, speed, summary) {
+    constructor(temporal, spacial, summary) {
+        this.type = 'promenade';
         this.temporal = temporal; // "rhythmic" --- "chaotic"
         this.spacial = spacial; // "clustered" --- "scattered"
         this.summary = summary; // string summary of the list of interactions
@@ -44,21 +45,22 @@ class PatternAnalyzer {
         this.aggregator = new InteractionAggregator();
         // const WORKER_URL = 'http://127.0.0.1:8787';
         const WORKER_URL = 'https://cairn-worker.cairn-worker.workers.dev/';
-        this.client = new CairnClient(WORKER_URL);
+        this.client = new Client(WORKER_URL);
     }
 
-    async push(interaction) {
+    async push(interaction, processor) {
         this.aggregator.push(interaction);
         const response = await this.eval();
         if (response.length > 0) {
-            cairn.talk(response);
+            processor.display(response);
+            processor.setShapes(response);
         }
     }
 
     eval() {
         const shouldEnd = Math.floor(Math.random() * (101));
         console.log("shouldEnd: " + shouldEnd);
-        if (shouldEnd > 85) {
+        if (shouldEnd > 80) {
             const response = this.client.makeRequest(
                 new DetectedPattern(
                     this.analyzeRhythm(this.aggregator.intervals), 
@@ -66,7 +68,6 @@ class PatternAnalyzer {
                     `The interaction involved ${this.aggregator.interactions.length+1} ${this.analyzeClickingSpeed(this.aggregator.intervals)} clicks.`
             ));
             this.aggregator = new InteractionAggregator(); // reset
-            // let placeholder = 'A weathered whisper emerges from ancient stone... \nWhen raindrops cluster before the wind claims them, do they remember their unity? Your gestures echo the dance of autumn leaves - gathering in communion before the decisive gust that charts their journey. \nSuch is the nature of moments that build toward change: first the gathering, then the leap. \nWhat patterns do you recognize in your own moments of hesitation before transformation? \nThe stones hold your silence...';
             return response;
         } else {
             return "";
