@@ -52,8 +52,8 @@ class PatternAnalyzer {
         this.aggregator.push(interaction);
         const response = await this.eval();
         if (response.length > 0 && !processor.isDisplaying()) {
-            processor.display(response);
             processor.setShapes(response);
+            processor.display(response);
         }
     }
 

@@ -65,6 +65,7 @@ class ResponseProcessor {
         }
 
         this.displaying = false;
+        this.gpp.setShapes([]);
     }
 
     isDisplaying() {
