@@ -6,7 +6,7 @@ class Scene {
     constructor() {
         this.stick_y = -1;
         this.interval = 30;
-        this.delta = 7;
+        this.delta = 5;
         this.counter = 0;
         this.area = document.getElementById('scene');
     }
