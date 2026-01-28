@@ -4,10 +4,19 @@
 class Scene {
 
     constructor() {
-        // this.stick = new Stick();
+        this.stick_y = window.innerHeight/2 - phoneH/7;
+        this.interval = 100;
+        this.delta = 10;
+        this.counter = 0;
     }
 
     update() {
+        this.counter = this.counter + 1;
+        if (this.counter > this.interval) {
+            this.stick_y = this.stick_y + this.delta;
+            this.delta = this.delta * -1;
+            this.counter = 0;
+        }
     }
 
     display(img, stickImg) {
@@ -43,12 +52,46 @@ class Scene {
         pop();
 
         // display stick figure
-        image(stickImg, window.innerWidth/2 - phoneW/4, window.innerHeight/2 - phoneH/7, newWidth*0.06, newHeight*0.17);
+        image(stickImg, window.innerWidth/2 - phoneW/4, this.stick_y, newWidth*0.06, newHeight*0.17);
         
     }
 
     windowResized() {
         resizeCanvas(window.innerWidth, window.innerHeight);
+    }
+
+    createParticles(x, y) {
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
+        for (let i = 0; i < 8; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.style.width = '8px';
+            particle.style.height = '8px';
+            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            const angle = (Math.PI * 2 * i) / 8;
+            const distance = 50 + Math.random() * 50;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--tx', `${tx}px`);
+            particle.style.setProperty('--ty', `${ty}px`);
+            
+            this.area.appendChild(particle);
+            particle.addEventListener('animationend', () => particle.remove());
+        }
+    }
+
+    createTrail(x, y) {
+        const trail = document.createElement('div');
+        trail.className = 'trail';
+        trail.style.left = `${x - 5}px`;
+        trail.style.top = `${y - 5}px`;
+        trail.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+        this.area.appendChild(trail);
+        trail.addEventListener('animationend', () => trail.remove());
     }
 
     handlePressed(mouseX, mouseY) {

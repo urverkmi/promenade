@@ -36,6 +36,19 @@
             responseProcessor.draw();
         }
 
+        // interaction listeners
+        function mouseDragged() {
+            scene.handleMoved(mouseX, mouseY);
+        }
+
+        function mousePressed() {
+            scene.handlePressed(mouseX, mouseY);
+        }
+
+        function mouseReleased() {
+            scene.handleReleased();
+        }
+
         function windowResized() {
             scene.windowResized();
         }
