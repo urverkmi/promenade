@@ -4,7 +4,7 @@
 class Scene {
 
     constructor() {
-        this.stick_y = window.innerHeight/2 - phoneH/7;
+        this.stick_y = -1;
         this.interval = 100;
         this.delta = 10;
         this.counter = 0;
@@ -12,7 +12,7 @@ class Scene {
 
     update() {
         this.counter = this.counter + 1;
-        if (this.counter > this.interval) {
+        if (this.stick_y > 0 && this.counter > this.interval) {
             this.stick_y = this.stick_y + this.delta;
             this.delta = this.delta * -1;
             this.counter = 0;
@@ -50,6 +50,10 @@ class Scene {
         push();
         rect(window.innerWidth/2 - phoneW/2, window.innerHeight/2 - phoneH/2*1.2, phoneW, phoneH); 
         pop();
+
+        if (this.stick_y < 0) {
+            this.stick_y = window.innerHeight/2 - phoneH/7;
+        } 
 
         // display stick figure
         image(stickImg, window.innerWidth/2 - phoneW/4, this.stick_y, newWidth*0.06, newHeight*0.17);
